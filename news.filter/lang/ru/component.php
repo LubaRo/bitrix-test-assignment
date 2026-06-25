@@ -1,0 +1,5 @@
+<?php
+$MESS['IBLOCK_All_CATEGORIES'] = "Все категории";
+$MESS['LUBARO_IBLOCK_FIELD_YEAR'] = "Год";
+$MESS['LUBARO_IBLOCK_FIELD_SECTION_ID'] = "Категория";
+$MESS['LUBARO_IBLOCK_FIELD_DATE_ACTIVE_FROM'] = "Диапазон дат";

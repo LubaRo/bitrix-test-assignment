@@ -1,0 +1,13 @@
+.lubaro-news-date-time {
+	color:#486DAA;
+}
+.lubaro-news-section {
+	border: 1px solid #9a9bd7;
+    border-radius: 10px;
+    padding: 5px 10px;
+    margin-right: 5px;
+}
+
+.lubaro-news-section-list {
+    padding-top: 1em;
+}

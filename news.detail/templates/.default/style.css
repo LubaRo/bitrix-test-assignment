@@ -1,0 +1,7 @@
+.lubaro-news-detail {
+    .top-block {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+}

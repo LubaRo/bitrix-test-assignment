@@ -1,0 +1,38 @@
+.lubaro-news-filter-form-wrapper {
+    flex-basis: 100%;
+    flex-wrap: wrap;
+
+    input, select {
+        cursor: pointer;
+    }
+
+    .buttons-block {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .buttons-block div {
+        margin: 10px;
+    }
+
+    .buttons-block button,
+    .buttons-block a {
+        padding: 5px 15px;
+        border-radius: 5px;
+        border: 1px solid #dcdcdc;
+        font-weight: bold;
+    }
+
+    .set-filter button {
+        background-color: #34ad5c;
+        color: white;
+        cursor: pointer;
+    }
+
+    .reset-filter a {
+        background-color: #d6d6d6;
+        color: white;
+        text-decoration: none;
+    }
+}
