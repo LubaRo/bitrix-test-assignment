@@ -16,7 +16,13 @@ class LubaroNewsDetailIndexComponent extends \CBitrixComponent
                 throw new \Bitrix\Main\NotSupportedException(GetMessage("IBLOCK_MODULE_NOT_INSTALLED"));
             }
             $this->prepareParams();
-            $this->prepareData();
+            $this->prepareCachedData();
+
+            if ($this->arResult["ID"]) {
+                $this->addMetaData();
+                $this->addBreadcrumbsInfo();
+            }
+
         } catch (Exception $e) {
             $exceptionHandling = \Bitrix\Main\Config\Configuration::getValue("exception_handling");
             if ($exceptionHandling["debug"]) {
@@ -32,6 +38,13 @@ class LubaroNewsDetailIndexComponent extends \CBitrixComponent
         if (!$this->arParams['ELEMENT_ID']) {
             $this->process404();
         }
+
+        $this->arParams["SET_TITLE"] ??= 'Y';
+        $this->arParams["SET_BROWSER_TITLE"] ??= 'Y';
+        $this->arParams["SET_META_KEYWORDS"] ??= 'Y';
+        $this->arParams["SET_META_DESCRIPTION"] ??= 'Y';
+        $this->arParams["SET_CANONICAL_URL"] ??= 'Y';
+
         $this->arParams["CACHE_TIME"] ??= '36000000';
         $this->arParams["CACHE_TYPE"] ??= 'A';
         $this->arParams['INCLUDE_IBLOCK_INTO_CHAIN'] ??= true;
@@ -40,20 +53,8 @@ class LubaroNewsDetailIndexComponent extends \CBitrixComponent
         $this->arParams["ACTIVE_DATE_FORMAT"] ??= $this->getDB()->DateFormatToPHP(\CSite::GetDateFormat("SHORT"));
     }
 
-
-    private function prepareData()
+    private function prepareCachedData()
     {
-        //Handle case when ELEMENT_CODE used
-        // if ($this->arParams["ELEMENT_ID"] <= 0) {
-        //     $this->arParams["ELEMENT_ID"] = CIBlockFindTools::GetElementID(
-        //         $this->arParams["ELEMENT_ID"],
-        //         $this->arParams["~ELEMENT_CODE"],
-        //         false,
-        //         false,
-        //         $arFilter
-        //     );
-        // }
-
         $arFilter = [
             'ID' => $this->arParams["ELEMENT_ID"],
             'IBLOCK_ID' => $this->arParams["IBLOCK_ID"],
@@ -110,6 +111,8 @@ class LubaroNewsDetailIndexComponent extends \CBitrixComponent
                     )
                     : '';
 
+                $ipropValues = new \Bitrix\Iblock\InheritedProperty\ElementValues($this->arResult["IBLOCK_ID"], $this->arResult["ID"]);
+                $this->arResult["IPROPERTY_VALUES"] = $ipropValues->getValues();
 
                 \Bitrix\Iblock\Component\Tools::getFieldImageData(
                     $this->arResult,
@@ -124,7 +127,6 @@ class LubaroNewsDetailIndexComponent extends \CBitrixComponent
                     $sectionsList[$_sectionData['ID']] = $_sectionData['NAME'];
                 }
                 $this->arResult['SECTION_LIST'] = $sectionsList;
-
 
                 if ($this->arParams["ADD_SECTIONS_CHAIN"] && $this->arResult["IBLOCK_SECTION_ID"] > 0) {
                     $rsPath = CIBlockSection::GetNavChain(
@@ -155,29 +157,120 @@ class LubaroNewsDetailIndexComponent extends \CBitrixComponent
 
                 $this->arResult["IBLOCK"] = GetIBlock($this->arResult["IBLOCK_ID"], $this->arResult["IBLOCK_TYPE_ID"]);
 
-
-                $showBreadCrumbs = false;
-                $listPageURL = $this->arParams['LIST_PAGE_URL'] ??= '';
-                if ($listPageURL <> '' && $this->arParams["INCLUDE_IBLOCK_INTO_CHAIN"] && isset($this->arResult["IBLOCK"]["NAME"])) {
-                    $showBreadCrumbs = true;
-                    $this->getApplication()->AddChainItem($this->arResult["IBLOCK"]["NAME"], $listPageURL);
-                }
-
-                if ($showBreadCrumbs && $this->arParams["ADD_SECTIONS_CHAIN"] && is_array($this->arResult["SECTION"])) {
-                    foreach ($this->arResult["SECTION"]["PATH"] as $arPath) {
-                        if ($arPath["IPROPERTY_VALUES"]["SECTION_PAGE_TITLE"] != "")
-                            $this->getApplication()->AddChainItem($arPath["IPROPERTY_VALUES"]["SECTION_PAGE_TITLE"], $arPath["~SECTION_PAGE_URL"]);
-                        else
-                            $this->getApplication()->AddChainItem($arPath["NAME"], $arPath["~SECTION_PAGE_URL"]);
-                    }
-                }
-
+                $this->prepareMetaData();
 
                 $this->includeComponentTemplate();
             } else {
                 $this->abortResultCache();
                 $this->process404();
             }
+        }
+    }
+
+    private function addBreadcrumbsInfo()
+    {
+        $showBreadCrumbs = false;
+        $listPageURL = $this->arParams['LIST_PAGE_URL'] ??= '';
+        if ($listPageURL <> '' && $this->arParams["INCLUDE_IBLOCK_INTO_CHAIN"] && isset($this->arResult["IBLOCK"]["NAME"])) {
+            $showBreadCrumbs = true;
+            $this->getApplication()->AddChainItem($this->arResult["IBLOCK"]["NAME"], $listPageURL);
+        }
+
+        if ($showBreadCrumbs && $this->arParams["ADD_SECTIONS_CHAIN"] && is_array($this->arResult["SECTION"])) {
+            foreach ($this->arResult["SECTION"]["PATH"] as $arPath) {
+                if ($arPath["IPROPERTY_VALUES"]["SECTION_PAGE_TITLE"] != "")
+                    $this->getApplication()->AddChainItem($arPath["IPROPERTY_VALUES"]["SECTION_PAGE_TITLE"], $arPath["~SECTION_PAGE_URL"]);
+                else
+                    $this->getApplication()->AddChainItem($arPath["NAME"], $arPath["~SECTION_PAGE_URL"]);
+            }
+        }
+    }
+    private function prepareMetaData()
+    {
+        $this->arResult["META_TAGS"] = [];
+
+        if ($this->arParams["SET_TITLE"] === 'Y') {
+            $this->arResult["META_TAGS"]["TITLE"] = (
+                (string) ($this->arResult["IPROPERTY_VALUES"]["ELEMENT_PAGE_TITLE"] ?? '') !== ''
+                ? $this->arResult["IPROPERTY_VALUES"]["ELEMENT_PAGE_TITLE"]
+                : $this->arResult["NAME"]
+            );
+        }
+
+        if ($this->arParams["SET_BROWSER_TITLE"] === 'Y') {
+            $browserTitle = Collection::firstNotEmpty(
+                $this->arResult["PROPERTIES"],
+                array($this->arParams["BROWSER_TITLE"], "VALUE")
+                ,
+                $this->arResult,
+                $this->arParams["BROWSER_TITLE"]
+                ,
+                $this->arResult["IPROPERTY_VALUES"],
+                "ELEMENT_META_TITLE"
+            );
+            $this->arResult["META_TAGS"]["BROWSER_TITLE"] = (
+                is_array($browserTitle)
+                ? implode(" ", $browserTitle)
+                : $browserTitle
+            );
+            unset($browserTitle);
+        }
+        if ($this->arParams["SET_META_KEYWORDS"] === 'Y') {
+            $metaKeywords = Collection::firstNotEmpty(
+                $this->arResult["PROPERTIES"],
+                array($this->arParams["META_KEYWORDS"], "VALUE")
+                ,
+                $this->arResult["IPROPERTY_VALUES"],
+                "ELEMENT_META_KEYWORDS"
+            );
+            $this->arResult["META_TAGS"]["KEYWORDS"] = (
+                is_array($metaKeywords)
+                ? implode(" ", $metaKeywords)
+                : $metaKeywords
+            );
+            unset($metaKeywords);
+        }
+        if ($this->arParams["SET_META_DESCRIPTION"] === 'Y') {
+            $metaDescription = Collection::firstNotEmpty(
+                $this->arResult["PROPERTIES"],
+                array($this->arParams["META_DESCRIPTION"], "VALUE")
+                ,
+                $this->arResult["IPROPERTY_VALUES"],
+                "ELEMENT_META_DESCRIPTION"
+            );
+            $this->arResult["META_TAGS"]["DESCRIPTION"] = (
+                is_array($metaDescription)
+                ? implode(" ", $metaDescription)
+                : $metaDescription
+            );
+            unset($metaDescription);
+        }
+
+    }
+
+    private function addMetaData()
+    {
+        $arTitleOptions = [];
+        if (isset($this->arParams['SET_CANONICAL_URL']) && $this->arParams['SET_CANONICAL_URL'] === 'Y' && $this->arResult["CANONICAL_PAGE_URL"]) {
+            $this->getApplication()->SetPageProperty('canonical', $this->arResult["CANONICAL_PAGE_URL"]);
+        }
+
+        if ($this->arParams["SET_TITLE"])
+            $this->getApplication()->SetTitle($this->arResult["META_TAGS"]["TITLE"], $arTitleOptions);
+
+        if ($this->arParams["SET_BROWSER_TITLE"] === 'Y') {
+            if ($this->arResult["META_TAGS"]["BROWSER_TITLE"] !== '')
+                $this->getApplication()->SetPageProperty("title", $this->arResult["META_TAGS"]["BROWSER_TITLE"], $arTitleOptions);
+        }
+
+        if ($this->arParams["SET_META_KEYWORDS"] === 'Y') {
+            if ($this->arResult["META_TAGS"]["KEYWORDS"] !== '')
+                $this->getApplication()->SetPageProperty("keywords", $this->arResult["META_TAGS"]["KEYWORDS"], $arTitleOptions);
+        }
+
+        if ($this->arParams["SET_META_DESCRIPTION"] === 'Y') {
+            if ($this->arResult["META_TAGS"]["DESCRIPTION"] !== '')
+                $this->getApplication()->SetPageProperty("description", $this->arResult["META_TAGS"]["DESCRIPTION"], $arTitleOptions);
         }
     }
     private function process404($message = '')

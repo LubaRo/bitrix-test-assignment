@@ -21,7 +21,12 @@ class LubaroNewListIndexComponent extends \CBitrixComponent
                 $this->includeComponentTemplate('detail');
 
             } else {
-                $this->prepareData();
+                $this->prepareParams();
+                $this->prepareCachedData();
+
+                if ($this->arResult["ID"]) {
+                    $this->addMetaData();
+                }
             }
 
         } catch (Exception $e) {
@@ -55,7 +60,7 @@ class LubaroNewListIndexComponent extends \CBitrixComponent
 
     }
 
-    private function prepareData()
+    private function prepareParams()
     {
         $this->arParams['FILTER_NAME'] = 'newsFilter';
 
@@ -71,6 +76,7 @@ class LubaroNewListIndexComponent extends \CBitrixComponent
         $this->arParams['NEWS_COUNT'] = (int) ($this->arParams['NEWS_COUNT'] ?? 10);
         $this->arParams["ACTIVE_DATE_FORMAT"] = $this->getDB()->DateFormatToPHP(\CSite::GetDateFormat("SHORT"));
 
+        $this->arParams["SET_TITLE"] ??= 'Y';
         $this->arParams["INCLUDE_IBLOCK_INTO_CHAIN"] = true;
         $this->arParams["PAGER_TITLE"] = '';
         $this->arParams["PAGER_SHOW_ALWAYS"] = false;
@@ -81,9 +87,8 @@ class LubaroNewListIndexComponent extends \CBitrixComponent
         $this->arParams["PAGER_BASE_LINK_ENABLE"] ??= 'N';
         $this->arParams["PAGER_BASE_LINK"] ??= '';
 
-        $this->getNewsList();
     }
-    private function getNewsList()
+    private function prepareCachedData()
     {
         //SELECT
         $arSelect = [
@@ -221,11 +226,33 @@ class LubaroNewListIndexComponent extends \CBitrixComponent
             $this->arResult["NAV_RESULT"] = $rsElement;
             $this->arResult["NAV_PARAM"] = $navComponentParameters;
 
-            if ($this->arParams["INCLUDE_IBLOCK_INTO_CHAIN"] && isset($this->arResult["NAME"])) {
-                $this->getApplication()->AddChainItem($this->arResult["NAME"]);
-            }
-
             $this->includeComponentTemplate('');
+        }
+    }
+
+    private function addMetaData()
+    {
+        if ($this->arParams["INCLUDE_IBLOCK_INTO_CHAIN"] && isset($this->arResult["NAME"])) {
+            $this->getApplication()->AddChainItem($this->arResult["NAME"]);
+        }
+
+        $arTitleOptions = [];
+        $ipropertyExists = (!empty($this->arResult["IPROPERTY_VALUES"]) && is_array($this->arResult["IPROPERTY_VALUES"]));
+        $iproperty = ($ipropertyExists ? $this->arResult["IPROPERTY_VALUES"] : array());
+
+        if ($this->arParams["SET_TITLE"] == 'Y' && isset($this->arResult["NAME"])) {
+            $this->getApplication()->SetTitle($this->arResult["NAME"], $arTitleOptions);
+        }
+
+        if ($ipropertyExists) {
+            if ($this->arParams["SET_BROWSER_TITLE"] === 'Y' && $iproperty["SECTION_META_TITLE"] != "")
+                $this->getApplication()->SetPageProperty("title", $iproperty["SECTION_META_TITLE"], $arTitleOptions);
+
+            if ($this->arParams["SET_META_KEYWORDS"] === 'Y' && $iproperty["SECTION_META_KEYWORDS"] != "")
+                $this->getApplication()->SetPageProperty("keywords", $iproperty["SECTION_META_KEYWORDS"], $arTitleOptions);
+
+            if ($this->arParams["SET_META_DESCRIPTION"] === 'Y' && $iproperty["SECTION_META_DESCRIPTION"] != "")
+                $this->getApplication()->SetPageProperty("description", $iproperty["SECTION_META_DESCRIPTION"], $arTitleOptions);
         }
     }
     private function prepareUrlConfig()
