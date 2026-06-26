@@ -60,3 +60,7 @@
 При открытии URL: http://**<your_bitrix_site_address>**/news_lubaro/ будет открываться список новостей.
 
 Также редактирование страницы и компонента доступно в админке в визуальном редакторе.
+
+Витрина: https://www.awesomescreenshot.com/video/54001382?key=ec7f998c9812778de216f62eff972185
+
+Админка: https://www.awesomescreenshot.com/video/54001467?key=a287c0ae61e2935996a3b51f51a3c0ea
