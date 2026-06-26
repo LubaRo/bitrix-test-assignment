@@ -6,6 +6,10 @@
         cursor: pointer;
     }
 
+    .inputs-block div {
+        margin-bottom: 15px;
+    }
+
     .buttons-block {
         display: flex;
         justify-content: center;
@@ -34,5 +38,9 @@
         background-color: #d6d6d6;
         color: white;
         text-decoration: none;
+    }
+
+    .filter-errors-wrapper {
+        color: red;
     }
 }

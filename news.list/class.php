@@ -111,14 +111,31 @@ class LubaroNewListIndexComponent extends \CBitrixComponent
         $filterRequest = $request->getQuery($this->arParams["FILTER_NAME"]) ?? [];
 
         $additionalFilter = [];
-
+        $filterErrors = [];
         foreach ($filterRequest as $_filterId => $_filterValue) {
             if ($_filterId == "SECTION_ID" && (int) $_filterValue > 0) {
                 $additionalFilter["SECTION_ID"] = (int) $_filterValue;
-            } elseif ($_filterId == "YEAR" && (int) $_filterValue > 0) {
-                $year = (int) $_filterValue;
-                $additionalFilter[">=DATE_ACTIVE_FROM"] = new DateTime("$year-01-01 00:00:00", "Y-m-d H:i:s");
-                $additionalFilter["<=DATE_ACTIVE_FROM"] = new DateTime("$year-12-31 23:59:59", "Y-m-d H:i:s");
+            } elseif ($_filterId == "PERIOD") {
+                ['START' => $_start, 'END' => $_end] = $_filterValue;
+                [$parsedStart, $_e1] = $this->parseDate($_start);
+                [$parsedEnd, $_e2] = $this->parseDate($_end);
+
+                if ($parsedStart) {
+                    $additionalFilter[">=DATE_ACTIVE_FROM"] = $parsedStart;
+                }
+                if ($parsedEnd) {
+                    $additionalFilter["<=DATE_ACTIVE_FROM"] = $parsedEnd;
+                }
+
+                if ($_e1) {
+                    $filterErrors[] = GetMessage('INCORRECT_PERIOD_START');
+                }
+                if ($_e2) {
+                    $filterErrors[] = GetMessage('INCORRECT_PERIOD_END');
+                }
+                if ($parsedStart && $parsedEnd && $parsedStart > $parsedEnd) {
+                    $filterErrors[] = GetMessage('PERIOD_START_LARGER_THAN_END');
+                }
             }
         }
 
@@ -174,13 +191,7 @@ class LubaroNewListIndexComponent extends \CBitrixComponent
 
             $this->arResult["ITEMS"] = [];
             $this->arResult["ELEMENTS"] = [];
-
-            // не фильтруем по годам для списка фильтров, иначе останется только выбранный год
-            $filterForYears = array_merge($arFilter, [">=DATE_ACTIVE_FROM" => "", "<=DATE_ACTIVE_FROM" => ""]);
-            $dateStart = CIBlockElement::GetList(['ACTIVE_FROM' => 'ASC'], $filterForYears, false, ["nTopCount" => 1], ['ACTIVE_FROM'])->fetch();
-            $dateEnd = CIBlockElement::GetList(['ACTIVE_FROM' => 'DESC'], $filterForYears, false, ["nTopCount" => 1], ['ACTIVE_FROM'])->fetch();
-            // NEWS_PERIOD передается в качестве параметра в lubaro.news.filter
-            $this->arResult['NEWS_PERIOD'] = ['start' => $dateStart['ACTIVE_FROM'], 'end' => $dateEnd['ACTIVE_FROM']];
+            $this->arResult["FILTER_DISPLAY_ERRORS"] = $filterErrors;
 
             $rsElement = CIBlockElement::GetList($arSort, $arFilter, false, $arNavParams, $arSelect);
             while ($row = $rsElement->Fetch()) {
@@ -343,6 +354,20 @@ class LubaroNewListIndexComponent extends \CBitrixComponent
             $this->arParams["SHOW_404"],
             $this->arParams["FILE_404"]
         );
+    }
+    private function parseDate($date)
+    {
+        $result = null;
+        $hasErrors = false;
+        if (empty($date)) {
+            return $result;
+        }
+        try {
+            $result = new DateTime($date, 'd.m.Y');
+        } catch (Exception $e) {
+            $hasErrors = true;
+        }
+        return [$result, $hasErrors];
     }
     private function getApplication()
     {

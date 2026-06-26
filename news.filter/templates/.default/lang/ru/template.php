@@ -1,4 +1,8 @@
 <?
-$MESS['IBLOCK_FILTER_TITLE'] = "Фильтр";
-$MESS['IBLOCK_SET_FILTER'] = "Фильтр";
-$MESS['IBLOCK_DEL_FILTER'] = "Сбросить";
+$MESS['LUBARO_FILTER_APPLY'] = "Найти";
+$MESS['LUBARO_FILTER_RESET'] = "Сбросить";
+$MESS['LUBARO_FILTER_DATE'] = "Дата";
+
+$MESS['LUBARO_INPUT_PERIOD_START'] = "начало";
+$MESS['LUBARO_INPUT_PERIOD_END'] = "конец";
+$MESS['LUBARO_SELECT_ALL_CATEGORIES'] = "Все категории";

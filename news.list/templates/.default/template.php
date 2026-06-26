@@ -8,9 +8,9 @@ if ($arParams["USE_FILTER"] == "Y"):
     "lubaro:news.filter",
     "",
     [
-      "NEWS_PERIOD" => $arResult['NEWS_PERIOD'],
       "FILTER_NAME" => $arParams["FILTER_NAME"],
       "IBLOCK_ID" => $arParams["IBLOCK_ID"],
+      "FILTER_DISPLAY_ERRORS" => $arResult['FILTER_DISPLAY_ERRORS'],
       "CACHE_GROUPS" => "Y",
       "CACHE_TIME" => "36000000",
       "CACHE_TYPE" => "A",
