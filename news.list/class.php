@@ -71,6 +71,7 @@ class LubaroNewListIndexComponent extends \CBitrixComponent
         $this->arParams['NEWS_COUNT'] = (int) ($this->arParams['NEWS_COUNT'] ?? 10);
         $this->arParams["ACTIVE_DATE_FORMAT"] = $this->getDB()->DateFormatToPHP(\CSite::GetDateFormat("SHORT"));
 
+        $this->arParams["INCLUDE_IBLOCK_INTO_CHAIN"] = true;
         $this->arParams["PAGER_TITLE"] = '';
         $this->arParams["PAGER_SHOW_ALWAYS"] = false;
         $this->arParams["PAGER_TEMPLATE"] = '';
@@ -220,6 +221,10 @@ class LubaroNewListIndexComponent extends \CBitrixComponent
             $this->arResult["NAV_RESULT"] = $rsElement;
             $this->arResult["NAV_PARAM"] = $navComponentParameters;
 
+            if ($this->arParams["INCLUDE_IBLOCK_INTO_CHAIN"] && isset($this->arResult["NAME"])) {
+                $this->getApplication()->AddChainItem($this->arResult["NAME"]);
+            }
+
             $this->includeComponentTemplate('');
         }
     }
@@ -293,7 +298,7 @@ class LubaroNewListIndexComponent extends \CBitrixComponent
         if (empty($date)) {
             return '';
         }
-        CIBlockFormatProperties::DateFormat(
+        return CIBlockFormatProperties::DateFormat(
             $this->arParams["ACTIVE_DATE_FORMAT"],
             MakeTimeStamp(
                 $date,
