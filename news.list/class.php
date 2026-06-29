@@ -224,6 +224,13 @@ class LubaroNewListIndexComponent extends \CBitrixComponent
                     $arItem["DISPLAY_ACTIVE_FROM"] = $this->formatDate($arItem["ACTIVE_FROM"]);
                     $arItem["SECTION_LIST"] = $sectionsByElement[$id] ?? [];
 
+                    \Bitrix\Iblock\Component\Tools::getFieldImageData(
+                        $arItem,
+                        ['PREVIEW_PICTURE'],
+                        \Bitrix\Iblock\Component\Tools::IPROPERTY_ENTITY_ELEMENT,
+                        'IPROPERTY_VALUES'
+                    );
+
                     $this->arResult["ITEMS"][$id] = $arItem;
                 }
             }

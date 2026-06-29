@@ -1,8 +1,9 @@
 .lubaro-news-date-time {
-	color:#486DAA;
+    color: #486DAA;
 }
+
 .lubaro-news-section {
-	border: 1px solid #9a9bd7;
+    border: 1px solid #9a9bd7;
     border-radius: 10px;
     padding: 5px 10px;
     margin-right: 5px;
@@ -10,4 +11,22 @@
 
 .lubaro-news-section-list {
     padding-top: 1em;
+}
+
+.lubaro.news-list {
+    .news-item {
+        display: flex;
+        align-items: center;
+    }
+
+    .image-wrapper {
+        flex: 0 0 20%;
+    }
+
+    .preview_picture {
+        object-fit: contain;
+        max-height: 100px;
+        max-width: calc(100% - 10px);
+        margin-bottom: 20px;
+    }
 }

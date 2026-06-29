@@ -4,4 +4,11 @@
         align-items: center;
         justify-content: space-between;
     }
+
+    .detail_picture {
+        object-fit: contain;
+        max-height: 300px;
+        max-width: 100%;
+        margin-bottom: 20px;
+    }
 }
