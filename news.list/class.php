@@ -62,6 +62,8 @@ class LubaroNewListIndexComponent extends \CBitrixComponent
 
     private function prepareParams()
     {
+        CPageOption::SetOptionString("main", "nav_page_in_session", "N");
+
         $this->arParams['FILTER_NAME'] = 'newsFilter';
 
         $this->arParams['DISPLAY_NAME'] = 'Y';
